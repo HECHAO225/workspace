@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sohu.mp.newsDAO.NewsMapper">
+  <resultMap id="ResultMap" type="com.sohu.mp.model.News">
+
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="title" jdbcType="CHAR" property="title" />
+    <result column="mp_media_id" jdbcType="CHAR" property="mpMediaId"/>
+    <result column="audit_words" jdbcType="CHAR" property="auditWords"/>
+    <result column="media_type" jdbcType="TINYINT" property="mediaType"/>
+    <result column="post_time" jdbcType="TIMESTAMP" property="postTime"/>
+    <result column="cms_id" jdbcType="BIGINT" property="cmsId"/>
+  </resultMap>
+  
+  <select id="selectByDate" resultMap="ResultMap" parameterType="java.util.Map" statementType="STATEMENT">
+  <![CDATA[
+  	select * from ${db} where post_time> ${date} order by post_time desc
+  	]]>
+  </select>
+  
+  <select id="selectById" resultMap="ResultMap" parameterType="java.util.Map" statementType="STATEMENT">
+  <![CDATA[
+  	select * from ${db} where id > ${id} order by id desc
+  ]]>
+  </select>
+  <select id="ById" resultMap="ResultMap" parameterType="java.util.Map" statementType="STATEMENT">
+  <![CDATA[
+  	select * from ${db} where id = ${id}
+  ]]>
+  </select>
+</mapper>

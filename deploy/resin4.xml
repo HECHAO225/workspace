@@ -1,0 +1,141 @@
+<!-- - Resin 4.0 configuration file. -->
+<resin xmlns="http://caucho.com/ns/resin" xmlns:resin="urn:java:com.caucho.resin">
+
+	<!-- property-based Resin configuration -->
+	<resin:properties path="/opt/apps/resin/conf/resin.properties" optional="true" />
+	<resin:properties path="cloud:/resin.properties" optional="true" recover="true" />
+
+	<resin:if test="${properties_import_url}">
+		<resin:properties path="${properties_import_url}" optional="true" recover="true" />
+	</resin:if>
+
+	<!-- Logging configuration for the JDK logging API -->
+	<log-handler name="" level="all" path="stdout:" timestamp="[%y-%m-%d %H:%M:%S.%s]" format=" {${thread}} ${log.message}" />
+
+	<!-- - Alternative pseudo-TTCC log format - - <log-handler name="" level="all" 
+		path="stdout:" - timestamp="%y-%m-%d %H:%M:%S.%s" - format=" [${thread}] 
+		${log.level} ${log.shortName} - ${log.message}"/> -->
+
+	<!-- - level='info' for production - 'fine' or 'finer' for development and 
+		troubleshooting -->
+	<logger name="" level="${log_level?:'info'}" />
+
+	<logger name="com.caucho.java" level="config" />
+	<logger name="com.caucho.loader" level="config" />
+
+	<stdout-log path="/opt/logs/resin/${name}-##port##/stdout/stdout.log"
+		rollover-period="1D" rollover-count="5" />
+	<stderr-log path="/opt/logs/resin/${name}-##port##/stderr/stderr.log"
+		rollover-period="1D" rollover-count="5" />
+
+	<!-- - Default configuration applied to all clusters, including - HTTP, 
+		HTTPS, and /resin-admin configuration. -->
+	<resin:import path="/opt/apps/resin/conf/cluster-default.xml" />
+
+	<!-- - Remote management requires at least one enabled admin user. -->
+	<resin:AdminAuthenticator>
+		<user name="${admin_user}" password="${admin_password}" />
+
+		<resin:import path="${__DIR__}/admin-users.xml" optional="true" />
+		<resin:import path="cloud:/admin-users.xml" optional="true"
+			recover="true" />
+	</resin:AdminAuthenticator>
+
+	<!-- - For clustered systems, create a password in as cluster_system_key -->
+	<cluster-system-key>${cluster_system_key}</cluster-system-key>
+
+	<!-- - For production sites, change dependency-check-interval to something 
+		- like 600s, so it only checks for updates every 10 minutes. -->
+	<dependency-check-interval>${dependency_check_interval?:'2s'}</dependency-check-interval>
+
+	<!-- For resin.properties dynamic cluster joining -->
+	<home-cluster>${home_cluster}</home-cluster>
+	<home-server>${home_server}</home-server>
+	<elastic-server>${elastic_server}</elastic-server>
+	<elastic-dns>${elastic_dns}</elastic-dns>
+
+	<!-- - Configures the main application cluster. Load-balancing configurations 
+		- will also have a web cluster. -->
+	<cluster id="${name}-##port##">
+		<server-default>
+			<http address="*" port="##port##" />
+
+			<jvm-arg>-Dfile.encoding=UTF-8</jvm-arg>
+			<jvm-arg>-Dsun.jnu.encoding=UTF-8</jvm-arg>
+
+			<jvm-arg>-Xms4096m</jvm-arg>
+			<jvm-arg>-Xmx4096m</jvm-arg>
+			<jvm-arg>-Xmn512m</jvm-arg>
+			<jvm-arg>-Xss1m</jvm-arg>
+			<jvm-arg>-XX:PermSize=256M</jvm-arg>
+			<jvm-arg>-XX:MaxPermSize=256M</jvm-arg>
+			<jvm-arg>-XX:SurvivorRatio=8</jvm-arg>
+			<jvm-arg>-XX:MaxTenuringThreshold=15</jvm-arg>
+
+			<jvm-arg>-XX:+UseParallelOldGC</jvm-arg>
+			<jvm-arg>-XX:GCTimeRatio=19</jvm-arg>
+
+			<jvm-arg>-XX:+PrintGCDetails</jvm-arg>
+			<jvm-arg>-XX:+PrintGCTimeStamps</jvm-arg>
+			<jvm-arg>-XX:+PrintClassHistogram</jvm-arg>
+			<jvm-arg>-XX:-TraceClassUnloading</jvm-arg>
+			<jvm-arg>-verbose:gc</jvm-arg>
+			<jvm-arg>-Xloggc:/opt/logs/resin/${name}-##port##/gc.log</jvm-arg>
+			<jvm-arg>-Dcom.sun.management.jmxremote</jvm-arg>
+			<jvm-arg>-Dcom.sun.management.jmxremote.port=1##port##</jvm-arg>
+			<jvm-arg>-Dcom.sun.management.jmxremote.ssl=false</jvm-arg>
+			<jvm-arg>-Dcom.sun.management.jmxremote.authenticate=false</jvm-arg>
+			<jvm-arg>-Xdebug</jvm-arg>
+			<jvm-arg>-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=4##port##
+			</jvm-arg>
+
+			<memory-free-min>1M</memory-free-min>
+
+			<thread-max>2048</thread-max>
+
+			<socket-timeout>30s</socket-timeout>
+
+			<keepalive-max>64</keepalive-max>
+			<keepalive-timeout>5s</keepalive-timeout>
+
+		</server-default>
+
+		<!-- define the servers in the cluster -->
+		<server id="app-##port##" address="127.0.0.1" port="3##port##">
+			<watchdog-port>2##port##</watchdog-port>
+		</server>
+
+		<web-app-default>
+			<servlet-mapping servlet-class='com.caucho.servlets.ResinStatusServlet'>
+				<url-pattern>/resin-status</url-pattern>
+				<init enable="read" />
+			</servlet-mapping>
+		</web-app-default>
+
+		<host-default>
+			<!-- creates the webapps directory for .war expansion -->
+			<web-app-deploy path="webapps"
+				expand-preserve-fileset="WEB-INF/work/**" multiversion-routing="${webapp_multiversion_routing}"
+				path-suffix="${elastic_webapp?resin.id:''}" />
+
+			<access-log path="/opt/logs/resin/${name}-##port##/access/access.log"
+				format='%h""%{%y-%m-%d %H:%M:%S.%s}t""%s""%D""%r""%{Referer}i""%{X-Forwarded-For}i""%{X-Real-IP}i""%{IPLOCATION}i""%{User-Agent}i'
+				rollover-period="1D" rollover-count="5" />
+		</host-default>
+
+		<!-- auto virtual host deployment in hosts/foo.example.com/webapps -->
+		<host-deploy path="hosts">
+			<host-default>
+				<resin:import path="host.xml" optional="true" />
+			</host-default>
+		</host-deploy>
+
+		<!-- the default host, matching any host name -->
+		<host id="" root-directory=".">
+			<!-- - webapps can be overridden/extended in the resin.xml -->
+			<web-app id="/" root-directory="${deploy.path}/${name}/##port##/webapp" />
+		</host>
+
+	</cluster>
+
+</resin>

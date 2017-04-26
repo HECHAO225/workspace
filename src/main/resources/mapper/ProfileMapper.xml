@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sohu.mp.DAO.ProfileMapper">
+
+  <resultMap id="ResultMap" type="com.sohu.mp.model.Profile">
+	<id column="id" jdbcType="BIGINT" property="id" />
+	<result column="username" jdbcType="CHAR" property="userName" />
+	<result column="passport" jdbcType="CHAR" property="passport" />
+  </resultMap>
+  <select id="selectUser" resultType="java.lang.String" parameterType="String">
+    select username from profile where passport=#{passport, jdbcType=CHAR}
+  </select>
+  
+  <select id="selectAll" resultMap="ResultMap">
+  	select * from profile order by id desc
+  </select>
+  
+  <select id="selectById" resultMap="ResultMap" parameterType="java.lang.Long">
+  	select * from profile where id > #{id, jdbcType=BIGINT} order by id desc
+  </select>
+  
+  <select id="ById" resultMap="ResultMap" parameterType="java.lang.Long">
+  	select * from profile where id = #{id, jdbcType=BIGINT}
+  </select>
+</mapper>
