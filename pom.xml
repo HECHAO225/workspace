@@ -209,7 +209,7 @@
 			<properties>
 				<env>prod</env>
 				<name>mp-searchV2</name>
-				<resin.server>10.11.149.65:8099</resin.server>
+				<resin.server>127.0.0.1:8099</resin.server>
 				<bin.path>/opt/bin/resin</bin.path>
 				<conf.path>/opt/conf/resin</conf.path>
 				<data.path>/opt/data</data.path>
