@@ -1,2 +1,2 @@
 #! /bin/sh
-exec /opt/apps/jdk/bin/java -jar /opt/apps/resin/lib/resin.jar -conf ##conf## $*
+exec /usr/lib/jdk1.8.0_121/bin/java -jar /opt/resin-pro-4.0.51/lib/resin.jar -conf #s#conf## $*
