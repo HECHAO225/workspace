@@ -1,5 +1,5 @@
 #!/bin/sh
-resin="/opt/apps/resin"
+resin="/opt/resin-pro-4.0.51"
 if [ ! -d "$resin" ]; then
 echo "please install resin4 first. thanks"
 exit 0
@@ -17,7 +17,7 @@ fi
 version=$("$java_home" -version 2>&1 | awk -F '"' '/version/ {print $2}')
 echo jdk version "$version"
 
-#cd /opt/data/jenkins/workspace/flow/lx.springmvc/target
+#cd /usr/share/jenkins/workspace/flow/lx.springmvc/target
 
 servers=(${resin.server})
 
